@@ -2,18 +2,39 @@ import { useEffect, useState } from "react";
 import images from "../../assets/images";
 
 export default function Weather() {
-  const [weather, setWeather] = useState(false);
-  // console.log(weather);
+  const [weather, setWeather] = useState(null);
+  const [error, setError] = useState("");
+
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchWeather = async () => {
-      await fetch(
-        "http://api.weatherapi.com/v1/current.json?key=47be000407254c0eb9d124732232310&q=jammu&aqi=no"
-      )
-        .then(async (data) => await data.json())
-        .then((data) => setWeather(data));
+      try {
+        const response = await fetch(
+          `https://api.weatherapi.com/v1/current.json?key=${process.env.REACT_APP_WEATHER_API_KEY}&q=jammu&aqi=no`,
+          { signal: controller.signal }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Weather request failed (${response.status})`);
+        }
+
+        setWeather(await response.json());
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          setError("Weather is currently unavailable.");
+          console.error(err);
+        }
+      }
     };
+
     fetchWeather();
+
+    return () => controller.abort();
   }, []);
+
+  if (error) return <div className="weather-data">{error}</div>;
+  if (!weather) return <div className="weather-data">Loading weather...</div>;
 
   return (
     <div className="weather-data">
@@ -27,7 +48,7 @@ export default function Weather() {
           {weather.current?.condition?.text}
         </p>
       </div>
-      <div class="vl"></div>
+      <div className="vl"></div>
       <div style={{ display: "flex", alignContent: "center" }}>
         <div>
           <img
@@ -45,7 +66,7 @@ export default function Weather() {
         </div>
       </div>
 
-      <div class="vl"></div>
+      <div className="vl"></div>
 
       <div>
         <div style={{ display: "flex", alignContent: "center" }}>

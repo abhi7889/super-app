@@ -7,14 +7,14 @@ export default function MoviesCard({ genre }) {
     const options = {
       method: "GET",
       headers: {
-        "X-RapidAPI-Key": "974d3c6cabmshe086d9981fb7039p11e61fjsn6f1675d411eb",
+        "X-RapidAPI-Key": process.env.REACT_APP_RAPIDAPI_KEY,
         "X-RapidAPI-Host": "moviesdatabase.p.rapidapi.com",
       },
     };
     const fetchMovies = async () => {
       await fetch(
-        `https://moviesdatabase.p.rapidapi.com/titles?genre=${genre}&year=2022`,
-        options
+        `https://moviesdatabase.p.rapidapi.com/titles?genre=${genre}&year=2026`,
+        options,
       )
         .then((response) => response.json())
         .then((response) => setMovies(response.results.splice(4, 4)))

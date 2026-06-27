@@ -2,27 +2,53 @@ import { useEffect, useState } from "react";
 import "./homepage.css";
 
 export default function News() {
-  const [news, setNews] = useState("");
-  const publishedDate = new Date(news.publishedAt);
+  const [news, setNews] = useState(null);
+  const [error, setError] = useState("");
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchNews = async () => {
+      try {
+        const response = await fetch(
+          `/v2/top-headlines?country=us&category=business&apiKey=${process.env.REACT_APP_NEWS_API_KEY}`,
+          { signal: controller.signal },
+        );
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message || `News request failed (${response.status})`,
+          );
+        }
+
+        if (!data.articles?.length) {
+          throw new Error("The news API returned no articles");
+        }
+
+        setNews(data.articles[0]);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          setError("News is currently unavailable.");
+          console.error(err);
+        }
+      }
+    };
+
+    fetchNews();
+
+    return () => controller.abort();
+  }, []);
+
+  if (error) return <div className="news news--des">{error}</div>;
+  if (!news) return <div className="news news--des">Loading news...</div>;
+
+  const publishedDate = new Date(news.publishedAt);
   const dateOptions = { year: "numeric", month: "numeric", day: "numeric" };
   const timeOptions = { hour: "2-digit", minute: "2-digit", second: "2-digit" };
-
   const formattedDate = publishedDate.toLocaleDateString("en-US", dateOptions);
   const formattedTime = publishedDate.toLocaleTimeString("en-US", timeOptions);
-
   const formattedDateTime = `${formattedDate} | ${formattedTime}`;
-  // console.log(news)
-  useEffect(() => {
-    const fetchNews = async () => {
-      await fetch(
-        "https://newsapi.org/v2/top-headlines?country=in&category=technology&sortBy=popularity&apiKey=58912f508bda48d6903b85d16a29b179"
-      )
-        .then(async (data) => await data.json())
-        .then((res) => setNews(res.articles[0]));
-    };
-    fetchNews();
-  }, []);
 
   return (
     <div className="news">
