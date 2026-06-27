@@ -10,10 +10,19 @@ export default function News() {
 
     const fetchNews = async () => {
       try {
+        const newsUrl =
+          process.env.NODE_ENV === "production"
+            ? "/api/news"
+            : `/v2/top-headlines?country=us&category=business&apiKey=${process.env.REACT_APP_NEWS_API_KEY}`;
         const response = await fetch(
-          `/v2/top-headlines?country=us&category=business&apiKey=${process.env.REACT_APP_NEWS_API_KEY}`,
+          newsUrl,
           { signal: controller.signal },
         );
+
+        if (!response.headers.get("content-type")?.includes("application/json")) {
+          throw new Error(`News endpoint returned ${response.status} instead of JSON`);
+        }
+
         const data = await response.json();
 
         if (!response.ok) {
